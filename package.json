@@ -1,0 +1,7 @@
+{
+  "name": "rastreio-cargas",
+  "private": true,
+  "description": "Rastreio diário automático das cargas da Mediton e AGKVIDA",
+  "scripts": { "rastreio": "node rastreio.js", "teste": "node teste-leitura.js" },
+  "dependencies": { "cheerio": "1.0.0", "firebase-admin": "12.7.0" }
+}
