@@ -5,6 +5,7 @@ const cheerio = require('cheerio');
 const UA = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0 Safari/537.36';
 const espera = ms => new Promise(r => setTimeout(r, ms));
 const limpa = t => String(t || '').replace(/\s+/g, ' ').trim();
+const textoDe = ($, el) => limpa(cheerio.load('<b>' + ($(el).html() || '').replace(/<(?!\/?(b|i|strong|em)\b)[^>]*>/gi, ' ') + '</b>')('b').first().text());
 
 // "06/11/2026" ou "06/11/26" -> "2026-11-06"
 function iso(d) {
@@ -85,15 +86,14 @@ function lerBraspress(html) {
   const vistos = new Set(), eventos = [];
   const infos = $('.vertical-time-line-info'), datas = $('.vertical-time-line-date');
   infos.each((i, el) => {
-    const t = limpa($(el).text()), d = limpa(datas.eq(i).text());
+    const t = textoDe($, el), d = limpa(datas.eq(i).text());
     const k = t + '|' + d;
     if (t && !vistos.has(k)) { vistos.add(k); eventos.push({ t, d }); }
   });
   const comData = eventos.filter(e => /\d{2}\/\d{2}\/\d{4}/.test(e.d));
   const ult = comData[comData.length - 1];
   const ultTexto = eventos.length ? eventos[eventos.length - 1].t : '';
-  const filial = [...eventos].reverse().map(e => (e.t.match(/FILIAL (?:DE )?(?:ORIGEM|DESTINO) - (.+)$/i) || [])[1]).find(Boolean) || '';
-  const entregue = !!dataEnt || (ENTREGUE.test(status) && !NAO_E_ENTREGA.test(status));
+const filial = [...eventos].reverse().map(e => (e.t.match(/FILIAL (?:DE )?(?:ORIGEM|DESTINO) - (.+? - [A-Z]{2})\b/i) || [])[1]).find(Boolean) || '';  const entregue = !!dataEnt || (ENTREGUE.test(status) && !NAO_E_ENTREGA.test(status));
   return {
     status: (status + (ultTexto && !ENTREGUE.test(status) && ultTexto.toLowerCase() !== status.toLowerCase() ? ' – ' + ultTexto : '')).slice(0, 120),
     local: filial,
