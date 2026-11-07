@@ -1,0 +1,29 @@
+name: Rastreio diário das cargas
+
+on:
+  schedule:
+    # 15:07 UTC = 12:07 em Brasília, todos os dias (o GitHub pode atrasar alguns minutos)
+    - cron: '7 15 * * *'
+  workflow_dispatch:
+    inputs:
+      teste:
+        description: 'Só consultar, sem gravar no painel'
+        type: boolean
+        default: true
+
+jobs:
+  rastreio:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: npm install --no-audit --no-fund
+      - run: npm run teste
+      - name: Consultar transportadoras e gravar no painel
+        env:
+          FIREBASE_SA: ${{ secrets.FIREBASE_SA }}
+          TESTE: ${{ (github.event_name == 'workflow_dispatch' && inputs.teste) && '1' || '0' }}
+        run: npm run rastreio
